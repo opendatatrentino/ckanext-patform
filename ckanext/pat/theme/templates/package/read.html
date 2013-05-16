@@ -1,0 +1,151 @@
+<html xmlns:py="http://genshi.edgewall.org/"
+  xmlns:i18n="http://genshi.edgewall.org/i18n"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:dcat="http://www.w3.org/ns/dcat#"
+  typeof="dcat:Dataset"
+  about=""
+  py:strip="">
+
+  <py:def function="page_title">${c.pkg_dict.get('title', c.pkg_dict['name'])}
+  - Datasets</py:def>
+
+  <py:def function="page_heading" property="dc:title">
+    ${c.pkg_dict['title']}
+  </py:def>
+
+  <py:match path="primarysidebar">
+
+    <li py:if="c.pkg_dict.get('tags')" class="sidebar-section">
+      <h3>Tags</h3>
+      ${tag_list(c.pkg_dict.get('tags', ''))}
+    </li>
+
+    <li py:if="c.pkg_dict.get('Categorie')" class="sidebar-section">
+		<h3>Categorie</h3>
+		<ul class="tags clearfix">
+			<li py:for="category in sorted(c.pkg_dict.get('Categorie', ''))">${category}</li>
+		</ul>
+    </li>
+
+    <li py:if="'groups' in c.pkg_dict" class="sidebar-section">
+      <h3>Groups</h3>
+      <ul class="groups">
+        <li py:for="group in sorted(c.pkg_dict.groups, key=lambda g: g['title'] or g['name'])">
+        <a href="${h.url_for(controller='group', action='read', id=group['name'])}">${group.get('title') or group.get('name')}</a>
+        </li>
+      </ul>
+    </li>
+
+    <li py:if="c.package_relationships" class="sidebar-section">
+      <h3>Related Datasets</h3>
+      <ul class="related-datasets">
+        <py:for each="pkg, relationship_str, comment in c.package_relationships">
+          <li>
+            ${h.literal(relationship_str % (h.link_to(pkg.name, h.url_for(controller="package", action="read", id=pkg.name))))}
+            <span py:if="comment is not None and len(comment)" class="relationship_comment">
+                (${comment})
+            </span>
+          </li>
+        </py:for>
+      </ul>
+    </li>
+
+    <li py:if="c.pkg.license_id" id="dataset-license" class="sidebar-section">
+      <strong>License:</strong>
+        <py:choose test="">
+          <span py:when="c.pkg_dict.get('license_url')"><a
+              href="${c.pkg_dict.get('license_url')}" rel="dc:rights">${c.pkg_dict.get('license_title')}</a></span>
+          <span py:when="c.pkg.license" property="dc:rights">${c.pkg_dict.get('license_title')}</span>
+          
+        
+        </py:choose>
+
+        <py:if test="c.pkg_dict.get('isopen')">
+            <a href="http://opendefinition.org/okd/italiano/" title="This dataset satisfies the Open Definition.">
+              <img class="open-data" src="http://assets.okfn.org/images/ok_buttons/od_80x15_blue.png" alt="[Open Data]" />
+            </a>
+        </py:if>
+        <py:if test="not c.pkg_dict.get('isopen')">
+            <span class="closed">
+              ${h.icon('lock')}
+            </span>
+        </py:if>
+
+          <py:choose test="">
+            <div py:when="c.pkg.license_id == 'cc-by'" class="accordion" id="licence_accordion">
+              <div class="accordion-group well well-small">
+                <div class="accordion-heading">
+                  <a class="accordion-toggle" data-toggle="collapse" data-parent="#licence_accordion" href="#collapseOne">Licenza del documento o del dataset: ${c.pkg_dict.get('title')}</a>
+                </div>
+                <div id="collapseOne" class="accordion-body collapse">
+                  <div class="accordion-inner">
+                    <p>La titolarit&agrave; piena ed esclusiva del dataset "${c.pkg_dict.get('title')}" &egrave; del/la ${c.pkg_dict.get('Titolare')}, ai sensi della L. 633/41 e s.m.i. (Licenziante).</p>
+                    <p>Il/La ${c.pkg_dict.get('Titolare')} autorizza la libera e gratuita consultazione, estrazione, riproduzione e modifica dei dati in essa contenuti da parte di chiunque (Licenziatario) vi abbia interesse per qualunque fine, purch&eacute; nel rispetto dei termini della licenza Creative Commons - Attribuzione 2.5 Italia (testo integrale: <a target="_blank" href="http://creativecommons.org/licenses/by/2.5/it/legalcode">http://creativecommons.org/licenses/by/2.5/it/legalcode</a>).</p>
+                    <p>L'attribuzione dovr&agrave; fornire una menzione adeguata di:
+                      <ul>
+                        <li>Autore originale e/o titolare dei diritti: <py:choose test=""><py:when test="c.pkg_dict.get('author')">${c.pkg_dict.get('author')}</py:when><py:when test="c.pkg_dict.get('Titolare')">${c.pkg_dict.get('Titolare')}</py:when></py:choose>;</li>
+                        <li>terze parti designate, se esistenti;</li>
+                        <li>Nome della Banca Dati: ${c.pkg_dict.get('title')};</li>
+                        <li py:if="c.pkg_dict.get('URL sito')"><a target="_blank" href="${c.pkg_dict.get('URL sito')}">${c.pkg_dict.get('URL sito')}</a> ove ci&ograve; sia ragionevolmente possibile; </li>
+                      </ul>
+                    </p>
+                    <p>In caso di documenti rielaborati o opere derivate di vario genere, l'attribuzione dovr&agrave; essere effettuata in modo tale da non ingenerare confusione rispetto all'origine del documento stesso.</p>
+                    <p>Si precisa esplicitamente che con la presente licenza il Licenziante intende autorizzare il Licenziatario ad esercitare, ferme restando le restrizioni della licenza di cui sopra, anche i diritti disciplinati dall'art. 102-bis e ss., L. 633/41 e s.m.i. (c.d. diritto sui generis del costitutore di una banca di dati).</p>
+                    <p>Il Licenziatario &egrave; invitato a segnalare ogni eventuale errore o incongruenza venisse rilevata rispetto al contenuto del documento. La segnalazione di eventuali inesattezze o errori pu&ograve; essere inviata al seguente indirizzo di posta elettronica <a href="mailto:${c.pkg_dict.get('maintainer_email')}">${c.pkg_dict.get('maintainer_email')}</a>, gestito dal ${c.pkg_dict.get('maintainer')}. Una copia di qualunque documento o dataset rielaborato potr&agrave; essere inviata all'indirizzo di posta elettronica <a href="mailto:${c.pkg_dict.get('maintainer_email')}">${c.pkg_dict.get('maintainer_email')}</a>.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div py:when="c.pkg.license_id == 'cc-zero'" class="accordion" id="licence_accordion">
+              <div class="accordion-group well well-small">
+                <div class="accordion-heading">
+                  <a class="accordion-toggle" data-toggle="collapse" data-parent="#licence_accordion" href="#collapseOne">Licenza del documento o del dataset: ${c.pkg_dict.get('title')}</a>
+                </div>
+                <div id="collapseOne" class="accordion-body collapse">
+                  <div class="accordion-inner">
+                    <p>La titolarit&agrave; piena ed esclusiva del documento o del dataset "${c.pkg_dict.get('title')}" &egrave; del/la ${c.pkg_dict.get('Titolare')} (Licenziante), ai sensi della L. 633/41 e s.m.i..</p>
+                    <p>Il/La ${c.pkg_dict.get('Titolare')} autorizza la libera e gratuita consultazione, estrazione, riproduzione e modifica dei dati in esso contenuti da parte di chiunque (Licenziatario) vi abbia interesse per qualunque fine, ovvero secondo i termini della Licenza Creative Commons Zero - CC0 v1.0 Universal (testo integrale: <a target="_blank" href="http://creativecommons.org/publicdomain/zero/1.0/legalcode">http://creativecommons.org/publicdomain/zero/1.0/legalcode</a>).</p>
+                    <p>Una spiegazione semplificata del contenuto della licenza &egrave; disponibile all'indirizzo: <a target="_blank" href="http://creativecommons.org/publicdomain/zero/1.0/deed.it">http://creativecommons.org/publicdomain/zero/1.0/deed.it</a>.</p>
+                    <p>Il Licenziatario &egrave; invitato a segnalare ogni eventuale errore o incongruenza venisse rilevata rispetto al contenuto del documento. La segnalazione di eventuali inesattezze o errori pu&ograve; essere inviata al seguente indirizzo di posta elettronica <a href="mailto:${c.pkg_dict.get('maintainer_email')}">${c.pkg_dict.get('maintainer_email')}</a>, gestito dal ${c.pkg_dict.get('maintainer')}.</p>
+                    <p>Una copia di qualunque documento o dataset rielaborato potr&agrave; essere inviata all'indirizzo di posta elettronica <a href="mailto:${c.pkg_dict.get('maintainer_email')}">${c.pkg_dict.get('maintainer_email')}</a>.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </py:choose>
+          
+    </li>
+
+  </py:match>
+
+  <div py:match="content">
+    <py:if test="c.pkg_revision_id">
+      <div id="revision" class="widget-container">
+        <p py:if="c.pkg_revision_not_latest">This is an old revision of this dataset, as edited <!--!by ${h.linked_user(rev.author)}-->at ${h.render_datetime(c.pkg_revision_timestamp, with_hours=True)}. It may differ significantly from the <a href="${h.url(controller='package', action='read', id=c.pkg.name)}">current revision</a>.</p>
+        <p py:if="not c.pkg_revision_not_latest">This is the current revision of this dataset, as edited <!--!by ${h.linked_user(rev.author)}-->at ${h.render_datetime(c.pkg_revision_timestamp, with_hours=True)}.</p>
+      </div>
+    </py:if>
+
+    <xi:include href="read_core.html" />
+
+    <span class="insert-comment-thread"></span>
+  </div>
+
+  <py:def function="optional_head">
+      <link rel="alternate" type="application/rdf+xml" title="RDF/XML" href="${ h.url_for(controller='package', action='read', id=c.pkg.id, qualified=True)}.rdf" />
+  </py:def>
+
+  <py:def function="optional_feed">
+  <link rel="alternate" type="application/atom+xml" title="Dataset History"
+    href="${h.url(controller='package', action='history', id=c.pkg.name, format='atom', days=7, qualified=True)}" />
+  </py:def>
+
+  <xi:include href="layout.html" />
+</html>
+
