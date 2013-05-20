@@ -1,5 +1,6 @@
 import os
 import logging
+
 from ckan.logic.converters import convert_to_extras,\
     convert_from_extras, convert_to_tags, convert_from_tags, free_tags_only,\
     date_to_db, date_to_form
@@ -248,12 +249,17 @@ class PatDatasetForm(SingletonPlugin):
 
     def setup_template_variables(self, context, data_dict):
         from pylons import config
+        
         data_dict.update({'available_only': True})
         
-        c.groups_available = c.userobj and \
-            c.userobj.get_groups('organization') or []
         c.licences = [('', '')] + base.model.Package.get_license_options()
         c.is_sysadmin = authz.Authorizer().is_sysadmin(c.user)
+        
+        if c.is_sysadmin:
+            c.groups_available = self._get_all_groups()
+        else:
+            c.groups_available = c.userobj and \
+                c.userobj.get_groups('organization') or []
         
         c.metadata = METADATA
         register = model.Package.get_license_register()
@@ -337,3 +343,14 @@ class PatDatasetForm(SingletonPlugin):
         pkg_dict['view_fields'] = pat_view
         
         return pkg_dict
+    
+    def _get_all_groups(self):
+        """ Get all groups """
+        if '_groups' not in self.__dict__:
+            self._groups = model.meta.Session.query(model.Group).\
+                filter(model.Member.state == 'active').all()
+
+        groups = self._groups
+        return groups
+
+
